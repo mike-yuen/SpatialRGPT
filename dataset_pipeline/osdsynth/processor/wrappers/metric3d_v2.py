@@ -7,8 +7,10 @@ import trimesh
 from PIL import Image
 
 
-def get_depth_model(device):
-    depth_model = torch.hub.load("yvanyin/metric3d", "metric3d_vit_giant2", pretrain=True)
+def get_depth_model(metric3d_weight_path, device):
+    # depth_model = torch.hub.load("yvanyin/metric3d", "metric3d_vit_giant2", pretrain=True)
+    depth_model = torch.hub.load("yvanyin/metric3d", "metric3d_vit_giant2", pretrain=False)
+    depth_model.load_state_dict(torch.load(metric3d_weight_path, map_location=device))
     return depth_model.to(device)
 
 

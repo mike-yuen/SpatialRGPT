@@ -43,7 +43,7 @@ def main(args):
     # Init the logger and log some basic info
     cfg.log_file = os.path.join(cfg.log_folder, f"{exp_name}_{args.timestamp}.log")
     logger = setup_logger()  # cfg.log_file
-    logger.info(f"Config:\n{cfg.pretty_text}")
+    # logger.info(f"Config:\n{cfg.pretty_text}")
 
     # Dump config to log
     cfg.dump(os.path.join(cfg.log_folder, os.path.basename(args.config)))
@@ -68,8 +68,8 @@ def annotate(cfg, global_data, logger, device):
 
     segmenter = SegmentImage(cfg, logger, device)
     reconstructor = PointCloudReconstruction(cfg, logger, device)
-    captioner = CaptionImage(cfg, logger, device)
-    prompter = PromptGenerator(cfg, logger, device)
+    # captioner = CaptionImage(cfg, logger, device)
+    # prompter = PromptGenerator(cfg, logger, device)
 
     for i, filepath in tqdm(enumerate(global_data), ncols=25):
         filename = filepath.split("/")[-1].split(".")[0]
@@ -85,25 +85,27 @@ def annotate(cfg, global_data, logger, device):
         try:
 
             # Run tagging model and get openworld detections
+            # vis_som: Tensor(H, W, 3)
+            # detection_list: List[Dict(class_name, xyxy, confidence, class_id, box_area, mask, subtracted_mask, rle, area, image_crop, mask_crop)]
             vis_som, detection_list = segmenter.process(image_bgr)
 
             # Lift 2D to 3D, 3D bbox informations are included in detection_list
             detection_list = reconstructor.process(filename, image_bgr, detection_list)
 
-            # Get LLaVA local caption for each region, however, currently just use a <region> placeholder
-            detection_list = captioner.process_local_caption(detection_list)
+            # # Get LLaVA local caption for each region, however, currently just use a <region> placeholder
+            # detection_list = captioner.process_local_caption(detection_list)
 
-            # Save detection list to json
-            detection_list_path = os.path.join(cfg.json_folder, f"{filename}.json")
-            save_detection_list_to_json(detection_list, detection_list_path)
+            # # Save detection list to json
+            # detection_list_path = os.path.join(cfg.json_folder, f"{filename}.json")
+            # save_detection_list_to_json(detection_list, detection_list_path)
 
-            # Generate QAs based on templates
-            vqa_results = prompter.evaluate_predicates_on_pairs(detection_list)
+            # # Generate QAs based on templates
+            # vqa_results = prompter.evaluate_predicates_on_pairs(detection_list)
 
-            for sample in vqa_results:
-                print(f"Q: {sample[0][0]}")
-                print(f"A: {sample[0][1]}")
-                print("-----------------------")
+            # for sample in vqa_results:
+            #     print(f"Q: {sample[0][0]}")
+            #     print(f"A: {sample[0][1]}")
+            #     print("-----------------------")
 
         except SkipImageException as e:
             # Meet skip image condition
