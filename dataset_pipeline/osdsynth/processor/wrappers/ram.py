@@ -13,7 +13,9 @@ RAM_CHECKPOINT_PATH = os.path.abspath(os.path.join(GSA_PATH, "recognize-anything
 
 def run_tagging_model(cfg, raw_image, tagging_model):
     # tagging_model = ram_swin_large_14m.pth
+    # raw_image = tensor(1, 3, H, W)
     res = inference_ram(raw_image, tagging_model)
+    # res = tuple(english_tags, chinese_tags)
     tags = res[0].strip(" ").replace("  ", " ").replace(" |", ",")
     print("Tags: ", tags)
 

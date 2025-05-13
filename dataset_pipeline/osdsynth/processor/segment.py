@@ -59,7 +59,7 @@ class SegmentImage:
             box_threshold=self.cfg.box_threshold,
             text_threshold=self.cfg.text_threshold,
         )
-
+        # detections: Detections(xyxy=tensor(detetions, 4), confidence=tensor(detetions,), class_id)
         if len(detections.class_id) < 1:
             raise SkipImageException("No object detected.")
 
