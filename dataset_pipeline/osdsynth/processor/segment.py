@@ -22,38 +22,27 @@ from PIL import Image
 class SegmentImage:
     """Class to segment the image."""
 
-    def __init__(self, cfg, logger, device, init_gdino=True, init_tagging=True, init_sam=True):
+    def __init__(self, cfg, logger, device, init_grounding_dino=True, init_tagging=True, init_sam=True):
         self.cfg = cfg
         self.logger = logger
         self.device = device
 
-        if init_gdino:
-            # Initialize the Grounding Dino Model
-            self.grounding_dino_model = get_grounding_dino_model(cfg, device)
-        else:
-            self.grounding_dino_model = None
-
-        if init_tagging:
-            # Initialize the tagging Model
-            self.tagging_transform, self.tagging_model = get_tagging_model(cfg, device)
-        else:
-            self.tagging_transform = self.tagging_model = None
-
-        if init_sam:
-            # Initialize the SAM Model
-            self.sam_predictor = get_sam_predictor(cfg.sam_variant, device)
-        else:
-            self.sam_predictor = None
-
-        pass
+        # Initialize the Grounding Dino Model
+        self.grounding_dino_model = get_grounding_dino_model(device) if init_grounding_dino else None
+        # Initialize the Tagging model
+        self.tagging_transform, self.tagging_model = get_tagging_model(device) if init_tagging else (None, None)
+        # Initialize the SAM Model
+        self.sam_predictor = get_sam_predictor(cfg.sam_variant, device) if init_sam else None
 
     def process(self, image_bgr, plot_som=True):
         """Segment the image."""
 
-        image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
+        image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)  # tensor(H, W, 3)
         image_rgb_pil = Image.fromarray(image_rgb)
 
         img_tagging = image_rgb_pil.resize((384, 384))
+        # self.tagging_transform(img_tagging): tensor(3, H, W)
+        # self.tagging_transform(img_tagging).unsqueeze(0): tensor(1, 3, H, W)
         img_tagging = self.tagging_transform(img_tagging).unsqueeze(0).to(self.device)
 
         # Tag2Text

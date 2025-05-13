@@ -83,13 +83,12 @@ def annotate(cfg, global_data, logger, device):
         image_bgr = cv2.resize(image_bgr, (int(640 / (image_bgr.shape[0]) * (image_bgr.shape[1])), 640))
 
         try:
-
-            # Run tagging model and get openworld detections
+            # Run the tagging model and get open-world detections
             # vis_som: Tensor(H, W, 3)
             # detection_list: List[Dict(class_name, xyxy, confidence, class_id, box_area, mask, subtracted_mask, rle, area, image_crop, mask_crop)]
             vis_som, detection_list = segmenter.process(image_bgr)
 
-            # Lift 2D to 3D, 3D bbox informations are included in detection_list
+            # Lift 2D to 3D; 3D bbox information is included in detection_list
             detection_list = reconstructor.process(filename, image_bgr, detection_list)
 
             # # Get LLaVA local caption for each region, however, currently just use a <region> placeholder
@@ -118,7 +117,7 @@ def parse_vqa_results(vqa_results):
     conversations = []
     for i, instruction in enumerate(vqa_results):
         conversations.append(instruction)
-        # func_names.append(funct_name)
+        # func_names.append(func_name)
     return conversations
 
 
