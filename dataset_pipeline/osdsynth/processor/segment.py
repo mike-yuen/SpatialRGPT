@@ -51,7 +51,8 @@ class SegmentImage:
         if len(classes) == 0:
             raise SkipImageException("No foreground objects detected by tagging model.")
 
-        # Using GroundingDINO to detect and SAM to segment
+        # Use GroundingDINO for detection
+        # SAM for segmentation
         detections = self.grounding_dino_model.predict_with_classes(
             image=image_bgr,  # This function expects a BGR image...
             classes=classes,
@@ -104,7 +105,7 @@ class SegmentImage:
             detections_dict["xyxy"], detections_dict["mask"], th1=0.05, th2=0.05
         )
 
-        # Sort the dets by area
+        # Sort the detections by area
         detections_dict = sort_detections_by_area(detections_dict)
 
         # Add RLE to dict

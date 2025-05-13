@@ -49,26 +49,6 @@ def get_sam_predictor(variant: str, device: str | int) -> SamPredictor:
         raise NotImplementedError
 
 
-def get_sam_mask_generator(variant: str, device: str | int) -> SamAutomaticMaskGenerator:
-    if variant == "sam":
-        sam = sam_model_registry[SAM_ENCODER_VERSION](checkpoint=SAM_CHECKPOINT_PATH)
-        sam.to(device)
-        mask_generator = SamAutomaticMaskGenerator(
-            model=sam,
-            points_per_side=12,
-            points_per_batch=144,
-            pred_iou_thresh=0.88,
-            stability_score_thresh=0.95,
-            crop_n_layers=0,
-            min_mask_region_area=100,
-        )
-        return mask_generator
-    elif variant == "fastsam":
-        raise NotImplementedError
-    else:
-        raise NotImplementedError
-
-
 def convert_detections_to_list(detections_dict, classes):
     detection_list = []
     for i in range(len(detections_dict["xyxy"])):
@@ -299,20 +279,6 @@ def mask_to_rle_pytorch(tensor: torch.Tensor) -> List[Dict[str, Any]]:
         counts.extend(btw_idxs.detach().cpu().tolist())
         out.append({"size": [h, w], "counts": counts})
     return out
-
-
-def rle_to_mask(rle: Dict[str, Any]) -> np.ndarray:
-    """Compute a binary mask from an uncompressed RLE."""
-    h, w = rle["size"]
-    mask = np.empty(h * w, dtype=bool)
-    idx = 0
-    parity = False
-    for count in rle["counts"]:
-        mask[idx : idx + count] = parity
-        idx += count
-        parity ^= True
-    mask = mask.reshape(w, h)
-    return mask.transpose()  # Put in C order
 
 
 def coco_encode_rle(uncompressed_rle: Dict[str, Any]) -> Dict[str, Any]:
