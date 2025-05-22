@@ -53,3 +53,4 @@ playground
 
 demo_out
 dataset_pipeline/osdsynth/external/*
+dataset_pipeline/pretrained/*

@@ -6,17 +6,21 @@ import torchvision.transforms as TS
 from ram import inference_ram
 from ram.models import ram
 
-# sys.path.append("osdsynth/external/recognize-anything")
+GSA_PATH = "osdsynth/external/Grounded-Segment-Anything"
+sys.path.append(GSA_PATH)
+RAM_CHECKPOINT_PATH = os.path.abspath(os.path.join(GSA_PATH, "recognize-anything/ram_swin_large_14m.pth"))
 
 
 def run_tagging_model(cfg, raw_image, tagging_model):
+    # tagging_model = ram_swin_large_14m.pth
+    # raw_image = tensor(1, 3, H, W)
     res = inference_ram(raw_image, tagging_model)
-    caption = "NA"
+    # res = tuple(english_tags, chinese_tags)
     tags = res[0].strip(" ").replace("  ", " ").replace(" |", ",")
     print("Tags: ", tags)
 
-    # Currently ", " is better for detecting single tags
-    # while ". " is a little worse in some case
+    # ", " works better for detecting single tags
+    # ". " misses some cases
     text_prompt = res[0].replace(" |", ",")
 
     if cfg.rm_bg_classes:
@@ -47,14 +51,11 @@ def process_tag_classes(text_prompt: str, add_classes: List[str] = [], remove_cl
     return classes
 
 
-def get_tagging_model(cfg, device):
-    RAM_CHECKPOINT_PATH = os.path.abspath(
-        "osdsynth/external/Grounded-Segment-Anything/recognize-anything/ram_swin_large_14m.pth"
-    )
-    tagging_model = ram(pretrained=RAM_CHECKPOINT_PATH, image_size=384, vit="swin_l")
+def get_tagging_model(device):
+    model = ram(pretrained=RAM_CHECKPOINT_PATH, image_size=384, vit="swin_l")
+    model = model.eval().to(device)
 
-    tagging_model = tagging_model.eval().to(device)
-    tagging_transform = TS.Compose(
+    transform = TS.Compose(
         [
             TS.Resize((384, 384)),
             TS.ToTensor(),
@@ -62,4 +63,4 @@ def get_tagging_model(cfg, device):
         ]
     )
 
-    return tagging_transform, tagging_model
+    return transform, model

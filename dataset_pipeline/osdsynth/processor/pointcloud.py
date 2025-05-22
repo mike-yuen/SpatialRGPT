@@ -1,3 +1,4 @@
+import os
 import random
 from collections import Counter
 
@@ -41,10 +42,16 @@ class PointCloudReconstruction:
                 raise ValueError(f"perspective_model_variant: {self.cfg.perspective_model_variant} not implemented")
 
             # Initialize the Camera Intrinsics Model
-            self.wilde_camera_model = torch.hub.load("ShngJZ/WildCamera", "WildCamera", pretrained=True).to(device)
+            pretrained_base = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "pretrained"))
+            wildcamera_weight_path = os.path.join(pretrained_base, "wild_camera_all.pth")
+            # self.wilde_camera_model = torch.hub.load("ShngJZ/WildCamera", "WildCamera", pretrained=True).to(device)
+            self.wilde_camera_model = torch.hub.load("ShngJZ/WildCamera", "WildCamera", pretrained=False)
+            self.wilde_camera_model.load_state_dict(torch.load(wildcamera_weight_path, map_location=device))
+            self.wilde_camera_model = self.wilde_camera_model.to(device)
 
             # Initialize the Metric3D_v2
-            self.depth_model = get_depth_model(device)
+            metric3d_weight_path = os.path.join(pretrained_base, "metric_depth_vit_giant2_800k.pth")
+            self.depth_model = get_depth_model(metric3d_weight_path, device)
         else:
             self.perspective_fields_model = self.wilde_camera_model = self.depth_model = None
 

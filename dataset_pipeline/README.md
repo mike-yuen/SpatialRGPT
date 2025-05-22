@@ -9,7 +9,8 @@ conda create -n osd_pipeline python=3.10 -y
 conda activate osd_pipeline
 
 ##### Install Pytorch according to your own setup #####
-pip install torch==2.2.2 torchvision==0.17.2 torchaudio==2.2.2 --index-url https://download.pytorch.org/whl/cu121
+pip install torch==2.3.0 torchvision==0.18.0 torchaudio==2.3.0 --index-url https://download.pytorch.org/whl/cu118
+pip install numpy==1.26.4
 
 # We use mmengine for config management
 pip install -U openmim
@@ -41,8 +42,14 @@ cd Grounded-Segment-Anything/
 # Install Segment Anything
 python -m pip install -e segment_anything
 
+# Download CUDA Toolkit 11.8
+https://developer.nvidia.com/cuda-11-8-0-download-archive
+$env:CUDA_HOME = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8"
+export CUDA_HOME=/path/to/cuda-11.3/
+
 # Install Grounding DINO
 pip install --no-build-isolation -e GroundingDINO
+pip install supervision==0.25.1
 
 # Install RAM
 git clone https://github.com/xinyu1205/recognize-anything.git
@@ -58,6 +65,9 @@ pip install -e ./recognize-anything/
 # Skip this if you are already in the `external` dir
 cd osdsynth/external
 git clone https://github.com/jinlinyi/PerspectiveFields.git
+
+# Install scikit-learn
+pip install -U scikit-learn
 ```
 
 #### Download Weights
@@ -67,13 +77,18 @@ cd ../ # navigate back to dataset_pipeline folder
 sh ./scripts/download_all_weights.sh
 ```
 
+Download weight to ./dataset_pipeline/pretrained
+https://huggingface.co/datasets/Shengjie/WildCamera/resolve/main/checkpoint/wild_camera_all.pth
+https://huggingface.co/JUGGHM/Metric3D/resolve/main/metric_depth_vit_giant2_800k.pth
+
 ### Inference
 
 #### Template-based QA
 To specify the folder containing the images for testing, use the `--input` argument. You can also adjust the settings in `configs/v2.py` to better suit your images, like modifying the SAM thresholds or tweaking the DBSCAN hyperparameters.
 
 ```sh
-python run_template_qa.py --config configs/v2.py --input PATH_TO_INPUT --vis True
+# --input PATH_TO_INPUT
+python run_template_qa.py --config configs/v2.py --vis True
 ```
 
 The results are saved in two formats. One is in JSON, where the Open3D bounding boxes are serialized. If you'd like to recreate the Open3D bounding box object for each detection, you can use the following code:

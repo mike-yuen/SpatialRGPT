@@ -1,16 +1,15 @@
 import os
 import sys
-from typing import Any, Dict, Generator, ItemsView, List, Tuple
+from typing import Any, Dict, List
 
-import cv2
 import numpy as np
 import torch
 from PIL import Image
 
+from segment_anything import SamAutomaticMaskGenerator, SamPredictor, sam_hq_model_registry, sam_model_registry
+
 GSA_PATH = "osdsynth/external/Grounded-Segment-Anything"
 sys.path.append(GSA_PATH)
-
-from segment_anything import SamAutomaticMaskGenerator, SamPredictor, sam_hq_model_registry, sam_model_registry
 
 # Segment-Anything checkpoint
 SAM_ENCODER_VERSION = "vit_h"
@@ -19,6 +18,7 @@ SAM_CHECKPOINT_PATH = os.path.join(GSA_PATH, "./sam_vit_h_4b8939.pth")
 # Segment-Anything checkpoint
 SAM_HQ_ENCODER_VERSION = "vit_h"
 SAM_HQ_CHECKPOINT_PATH = os.path.join(GSA_PATH, "./sam_hq_vit_h.pth")
+
 
 # Prompting SAM with detected boxes
 def get_sam_segmentation_from_xyxy(sam_predictor: SamPredictor, image: np.ndarray, xyxy: np.ndarray) -> np.ndarray:
@@ -45,26 +45,6 @@ def get_sam_predictor(variant: str, device: str | int) -> SamPredictor:
         sam_predictor = SamPredictor(sam)
         return sam_predictor
 
-    else:
-        raise NotImplementedError
-
-
-def get_sam_mask_generator(variant: str, device: str | int) -> SamAutomaticMaskGenerator:
-    if variant == "sam":
-        sam = sam_model_registry[SAM_ENCODER_VERSION](checkpoint=SAM_CHECKPOINT_PATH)
-        sam.to(device)
-        mask_generator = SamAutomaticMaskGenerator(
-            model=sam,
-            points_per_side=12,
-            points_per_batch=144,
-            pred_iou_thresh=0.88,
-            stability_score_thresh=0.95,
-            crop_n_layers=0,
-            min_mask_region_area=100,
-        )
-        return mask_generator
-    elif variant == "fastsam":
-        raise NotImplementedError
     else:
         raise NotImplementedError
 
@@ -299,20 +279,6 @@ def mask_to_rle_pytorch(tensor: torch.Tensor) -> List[Dict[str, Any]]:
         counts.extend(btw_idxs.detach().cpu().tolist())
         out.append({"size": [h, w], "counts": counts})
     return out
-
-
-def rle_to_mask(rle: Dict[str, Any]) -> np.ndarray:
-    """Compute a binary mask from an uncompressed RLE."""
-    h, w = rle["size"]
-    mask = np.empty(h * w, dtype=bool)
-    idx = 0
-    parity = False
-    for count in rle["counts"]:
-        mask[idx : idx + count] = parity
-        idx += count
-        parity ^= True
-    mask = mask.reshape(w, h)
-    return mask.transpose()  # Put in C order
 
 
 def coco_encode_rle(uncompressed_rle: Dict[str, Any]) -> Dict[str, Any]:
